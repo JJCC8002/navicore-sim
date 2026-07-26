@@ -55,77 +55,84 @@ class NaviCoreApp {
         const comboPrioridad = document.getElementById('combo-prioridad');
         const comboMision = document.getElementById('combo-mision');
 
-        comboVehiculo.innerHTML = Object.keys(VEHICLES).map(key => 
-            `<option value="${key}">${VEHICLES[key].name}</option>`
-        ).join('');
+        if (comboVehiculo) {
+            comboVehiculo.innerHTML = Object.keys(VEHICLES).map(key => 
+                `<option value="${key}">${VEHICLES[key].name}</option>`
+            ).join('');
+            comboVehiculo.value = 'rover';
+        }
 
-        comboPrioridad.innerHTML = Object.keys(PRIORITIES).map(key => 
-            `<option value="${key}">${PRIORITIES[key].name}</option>`
-        ).join('');
+        if (comboPrioridad) {
+            comboPrioridad.innerHTML = Object.keys(PRIORITIES).map(key => 
+                `<option value="${key}">${PRIORITIES[key].name}</option>`
+            ).join('');
+        }
 
-        comboMision.innerHTML = Object.keys(MISSIONS).map(key => 
-            `<option value="${key}">${MISSIONS[key].name}</option>`
-        ).join('');
-
-        comboVehiculo.value = 'rover';
+        if (comboMision) {
+            comboMision.innerHTML = Object.keys(MISSIONS).map(key => 
+                `<option value="${key}">${MISSIONS[key].name}</option>`
+            ).join('');
+        }
     }
 
     bindEvents() {
         // Conducción Manual WASD
-        document.getElementById('btn-manual-drive').addEventListener('click', () => {
+        document.getElementById('btn-manual-drive')?.addEventListener('click', () => {
             this.toggleManualDrive();
         });
 
         // Escenarios Presets
-        document.getElementById('combo-preset').addEventListener('change', (e) => {
+        document.getElementById('combo-preset')?.addEventListener('change', (e) => {
             this.loadPresetScenario(e.target.value);
         });
 
         // Algoritmo Selector
-        document.getElementById('combo-algoritmo').addEventListener('change', (e) => {
+        document.getElementById('combo-algoritmo')?.addEventListener('change', (e) => {
             this.algorithm = e.target.value;
             const textMap = { astar: 'A* Standard', dijkstra: 'Dijkstra', greedy: 'Greedy Best-First', bfs: 'BFS' };
-            document.getElementById('stat-algoritmo').textContent = textMap[this.algorithm] || 'A* Standard';
+            const statAlgo = document.getElementById('stat-algoritmo');
+            if (statAlgo) statAlgo.textContent = textMap[this.algorithm] || 'A* Standard';
             this.calculatePathAndTelemetry();
         });
 
-        document.getElementById('combo-vehiculo').addEventListener('change', (e) => {
+        document.getElementById('combo-vehiculo')?.addEventListener('change', (e) => {
             this.vehicleMgr.setVehicle(e.target.value);
             this.audio.playPing();
             this.calculatePathAndTelemetry();
         });
 
-        document.getElementById('combo-clima').addEventListener('change', (e) => {
+        document.getElementById('combo-clima')?.addEventListener('change', (e) => {
             this.weather = e.target.value;
             const textMap = { clear: '☀️ Despejado', rain: '🌧️ Lluvia (+30% consumo)', fog: '🌫️ Niebla (-25% velocidad)', night: '🌙 Noche (Luces + Focos)' };
-            document.getElementById('stat-clima').textContent = textMap[this.weather] || '☀️ Despejado';
+            const statClima = document.getElementById('stat-clima');
+            if (statClima) statClima.textContent = textMap[this.weather] || '☀️ Despejado';
             this.calculatePathAndTelemetry();
         });
 
         // Toggles
-        document.getElementById('toggle-range').addEventListener('change', (e) => {
+        document.getElementById('toggle-range')?.addEventListener('change', (e) => {
             this.renderer.showRangeRing = e.target.checked;
             this.renderer.render();
         });
 
-        document.getElementById('toggle-voz').addEventListener('change', (e) => {
+        document.getElementById('toggle-voz')?.addEventListener('change', (e) => {
             this.voice.enabled = e.target.checked;
         });
 
-        document.getElementById('toggle-lidar').addEventListener('change', (e) => {
+        document.getElementById('toggle-lidar')?.addEventListener('change', (e) => {
             this.renderer.enableLidar = e.target.checked;
         });
 
-        document.getElementById('toggle-heatmap').addEventListener('change', (e) => {
+        document.getElementById('toggle-heatmap')?.addEventListener('change', (e) => {
             this.renderer.showHeatmap = e.target.checked;
             this.renderer.render();
         });
 
-        document.getElementById('toggle-audio').addEventListener('change', (e) => {
+        document.getElementById('toggle-audio')?.addEventListener('change', (e) => {
             this.audio.enabled = e.target.checked;
         });
 
-        document.getElementById('btn-emergencia').addEventListener('click', () => {
+        document.getElementById('btn-emergencia')?.addEventListener('click', () => {
             this.triggerEmergencyProtocol();
         });
 
@@ -138,27 +145,28 @@ class NaviCoreApp {
             });
         });
 
-        document.getElementById('btn-flota').addEventListener('click', () => {
+        document.getElementById('btn-flota')?.addEventListener('click', () => {
             this.runFleetSimulation();
         });
 
-        document.getElementById('btn-calcular').addEventListener('click', () => {
+        document.getElementById('btn-calcular')?.addEventListener('click', () => {
             this.runSimulationAnimation();
         });
 
-        document.getElementById('btn-pausa').addEventListener('click', () => {
+        document.getElementById('btn-pausa')?.addEventListener('click', () => {
             this.togglePause();
         });
 
-        document.getElementById('btn-reiniciar').addEventListener('click', () => {
+        document.getElementById('btn-reiniciar')?.addEventListener('click', () => {
             this.stopAnimation();
             this.renderer.setVehiclePosition(null);
             this.renderer.setFleetPositions([]);
             this.calculatePathAndTelemetry();
-            document.getElementById('hud-speed-val').textContent = '0';
+            const hudSpeed = document.getElementById('hud-speed-val');
+            if (hudSpeed) hudSpeed.textContent = '0';
         });
 
-        document.getElementById('btn-nuevo-mapa').addEventListener('click', () => {
+        document.getElementById('btn-nuevo-mapa')?.addEventListener('click', () => {
             this.stopAnimation();
             this.renderer.generateNewRandomMap();
             this.calculatePathAndTelemetry();
@@ -166,57 +174,63 @@ class NaviCoreApp {
         });
 
         const sliderVel = document.getElementById('slider-velocidad');
-        sliderVel.addEventListener('input', (e) => {
+        sliderVel?.addEventListener('input', (e) => {
             this.animSpeedMs = parseInt(e.target.value);
-            document.getElementById('velocidad-valor').textContent = `${this.animSpeedMs}ms`;
+            const velVal = document.getElementById('velocidad-valor');
+            if (velVal) velVal.textContent = `${this.animSpeedMs}ms`;
         });
 
-        document.getElementById('btn-cam-2d').addEventListener('click', (e) => {
+        document.getElementById('btn-cam-2d')?.addEventListener('click', (e) => {
             this.setCameraMode('2d', e.target);
         });
-        document.getElementById('btn-cam-3d').addEventListener('click', (e) => {
+        document.getElementById('btn-cam-3d')?.addEventListener('click', (e) => {
             this.setCameraMode('3d', e.target);
         });
 
         const canvas = document.getElementById('mapa-canvas');
-        canvas.addEventListener('mousedown', (e) => {
-            this.isMouseDown = true;
-            this.applyBrushAtMouse(e);
-        });
+        if (canvas) {
+            canvas.addEventListener('mousedown', (e) => {
+                this.isMouseDown = true;
+                this.applyBrushAtMouse(e);
+            });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (this.isMouseDown) this.applyBrushAtMouse(e);
-        });
+            canvas.addEventListener('mousemove', (e) => {
+                if (this.isMouseDown) this.applyBrushAtMouse(e);
+            });
+        }
 
         window.addEventListener('mouseup', () => {
             this.isMouseDown = false;
         });
 
-        document.getElementById('btn-comparar').addEventListener('click', () => this.openDecisionModal());
-        document.getElementById('close-modal-decisiones').addEventListener('click', () => {
-            document.getElementById('modal-decisiones').style.display = 'none';
+        document.getElementById('btn-comparar')?.addEventListener('click', () => this.openDecisionModal());
+        document.getElementById('close-modal-decisiones')?.addEventListener('click', () => {
+            const modal = document.getElementById('modal-decisiones');
+            if (modal) modal.style.display = 'none';
         });
 
-        document.getElementById('btn-exportar').addEventListener('click', () => {
-            document.getElementById('modal-exportar').style.display = 'flex';
+        document.getElementById('btn-exportar')?.addEventListener('click', () => {
+            const modalExp = document.getElementById('modal-exportar');
+            if (modalExp) modalExp.style.display = 'flex';
         });
-        document.getElementById('close-modal-exportar').addEventListener('click', () => {
-            document.getElementById('modal-exportar').style.display = 'none';
+        document.getElementById('close-modal-exportar')?.addEventListener('click', () => {
+            const modalExp = document.getElementById('modal-exportar');
+            if (modalExp) modalExp.style.display = 'none';
         });
 
-        document.getElementById('btn-exp-json').addEventListener('click', () => {
+        document.getElementById('btn-exp-json')?.addEventListener('click', () => {
             if (!this.lastPathResult) return;
             const data = this.exporter.generateReportData(this.telemetry, this.vehicleMgr, this.lastPathResult);
             this.exporter.exportJSON(data);
         });
 
-        document.getElementById('btn-exp-txt').addEventListener('click', () => {
+        document.getElementById('btn-exp-txt')?.addEventListener('click', () => {
             if (!this.lastPathResult) return;
             const data = this.exporter.generateReportData(this.telemetry, this.vehicleMgr, this.lastPathResult);
             this.exporter.exportTXT(data);
         });
 
-        document.getElementById('btn-exp-html').addEventListener('click', () => {
+        document.getElementById('btn-exp-html')?.addEventListener('click', () => {
             if (!this.lastPathResult) return;
             const data = this.exporter.generateReportData(this.telemetry, this.vehicleMgr, this.lastPathResult);
             this.exporter.exportHTML(data);
@@ -230,15 +244,15 @@ class NaviCoreApp {
         const btn = document.getElementById('btn-manual-drive');
 
         if (this.isManualDrive) {
-            hudWasd.style.display = 'flex';
-            btn.classList.add('btn-primary');
+            if (hudWasd) hudWasd.style.display = 'flex';
+            if (btn) btn.classList.add('btn-primary');
             this.manualPos = { x: this.renderer.startPos.x, y: this.renderer.startPos.y, angle: 0 };
             this.renderer.setVehiclePosition(this.manualPos);
             this.addCopilotMessage('🎮 Modo Conducción Manual ACTIVADO. Usa las teclas W, A, S, D para conducir.');
             this.voice.speak('Modo de conducción manual activado. Control por teclado listo.');
         } else {
-            hudWasd.style.display = 'none';
-            btn.classList.remove('btn-primary');
+            if (hudWasd) hudWasd.style.display = 'none';
+            if (btn) btn.classList.remove('btn-primary');
             this.addCopilotMessage('🎮 Modo Conducción Manual DESACTIVADO.');
         }
     }
@@ -272,7 +286,8 @@ class NaviCoreApp {
                     this.manualPos = { x: nx, y: ny, angle: angle };
                     this.renderer.setVehiclePosition(this.manualPos);
                     this.audio.playEngineHum();
-                    document.getElementById('hud-speed-val').textContent = this.vehicleMgr.selectedVehicle.speed;
+                    const hudSpeed = document.getElementById('hud-speed-val');
+                    if (hudSpeed) hudSpeed.textContent = this.vehicleMgr.selectedVehicle.speed;
 
                     // Si llega al destino
                     if (nx === this.renderer.endPos.x && ny === this.renderer.endPos.y) {
@@ -301,6 +316,8 @@ class NaviCoreApp {
 
     parseTerminalCommand(cmdStr) {
         const out = document.getElementById('terminal-output');
+        if (!out) return;
+
         const appendTerm = (txt) => {
             const div = document.createElement('div');
             div.className = 'term-line';
@@ -343,8 +360,10 @@ class NaviCoreApp {
             case 'speed':
                 if (parts[1]) {
                     this.animSpeedMs = parseInt(parts[1]);
-                    document.getElementById('slider-velocidad').value = this.animSpeedMs;
-                    document.getElementById('velocidad-valor').textContent = `${this.animSpeedMs}ms`;
+                    const slider = document.getElementById('slider-velocidad');
+                    const velVal = document.getElementById('velocidad-valor');
+                    if (slider) slider.value = this.animSpeedMs;
+                    if (velVal) velVal.textContent = `${this.animSpeedMs}ms`;
                 }
                 break;
             default:
@@ -373,7 +392,8 @@ class NaviCoreApp {
             }
             grid[8][12].terrainType = 'recharge';
             this.vehicleMgr.setVehicle('agv');
-            document.getElementById('combo-vehiculo').value = 'agv';
+            const comboVehiculo = document.getElementById('combo-vehiculo');
+            if (comboVehiculo) comboVehiculo.value = 'agv';
             this.voice.speak('Escenario de planta automotriz cargado.');
         } else if (presetKey === 'smartcity') {
             for (let r = 0; r < rows; r++) {
@@ -383,7 +403,8 @@ class NaviCoreApp {
                 }
             }
             this.vehicleMgr.setVehicle('rover');
-            document.getElementById('combo-vehiculo').value = 'rover';
+            const comboVehiculo = document.getElementById('combo-vehiculo');
+            if (comboVehiculo) comboVehiculo.value = 'rover';
             this.voice.speak('Escenario Smart City cargado.');
         } else if (presetKey === 'mine') {
             for (let r = 0; r < rows; r++) {
@@ -394,7 +415,8 @@ class NaviCoreApp {
                 }
             }
             this.vehicleMgr.setVehicle('truck');
-            document.getElementById('combo-vehiculo').value = 'truck';
+            const comboVehiculo = document.getElementById('combo-vehiculo');
+            if (comboVehiculo) comboVehiculo.value = 'truck';
             this.voice.speak('Escenario de mina cargado.');
         }
 
@@ -419,7 +441,8 @@ class NaviCoreApp {
 
         if (this.activeBrush === 'waypoint') {
             this.renderer.waypoints.push({ x: col, y: row });
-            document.getElementById('hud-waypoints-count').textContent = `WP: ${this.renderer.waypoints.length}`;
+            const wpCount = document.getElementById('hud-waypoints-count');
+            if (wpCount) wpCount.textContent = `WP: ${this.renderer.waypoints.length}`;
         } else if (this.activeBrush === 'obstacle') {
             this.renderer.grid[row][col].isObstacle = true;
         } else {
@@ -544,14 +567,16 @@ class NaviCoreApp {
                 this.renderer.batteryPercent = Math.max(0, 100 - (100 - this.telemetry.batteryPercent) * progress);
 
                 this.audio.playEngineHum();
-                document.getElementById('hud-speed-val').textContent = this.vehicleMgr.selectedVehicle.speed;
+                const hudSpeed = document.getElementById('hud-speed-val');
+                if (hudSpeed) hudSpeed.textContent = this.vehicleMgr.selectedVehicle.speed;
 
                 step++;
             } else {
                 this.stopAnimation();
                 this.updateStatus('ready', '🎯 Misión Completada');
                 this.voice.speak('Misión completada. Objetivo alcanzado.');
-                document.getElementById('hud-speed-val').textContent = '0';
+                const hudSpeed = document.getElementById('hud-speed-val');
+                if (hudSpeed) hudSpeed.textContent = '0';
             }
         }, this.animSpeedMs);
     }
@@ -604,8 +629,9 @@ class NaviCoreApp {
     togglePause() {
         this.isPaused = !this.isPaused;
         const btnPausa = document.getElementById('btn-pausa');
-        if (this.isPaused) btnPausa.textContent = '▶️ Reanudar';
-        else btnPausa.textContent = '⏸ Pausar';
+        if (btnPausa) {
+            btnPausa.textContent = this.isPaused ? '▶️ Reanudar' : '⏸ Pausar';
+        }
     }
 
     stopAnimation() {
@@ -642,8 +668,10 @@ class NaviCoreApp {
             this.renderer.endPos
         );
         const html = this.decisionTable.renderHTML(matrix);
-        document.getElementById('modal-decisiones-content').innerHTML = html;
-        document.getElementById('modal-decisiones').style.display = 'flex';
+        const modalContent = document.getElementById('modal-decisiones-content');
+        const modal = document.getElementById('modal-decisiones');
+        if (modalContent) modalContent.innerHTML = html;
+        if (modal) modal.style.display = 'flex';
     }
 }
 
