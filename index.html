@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NaviCore - Sistema de Navegación Autónoma Enterprise 4.0 con Conducción Manual WASD, Alcance de Autonomía y Partículas 3D">
+    <meta name="theme-color" content="#070d18">
+    <title>NaviCore | Enterprise 4.0 Autonomous Suite</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- === BARRA LATERAL (SIDEBAR) === -->
+        <aside class="app-sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <img src="img/logo.jpg" alt="NaviCore Logo" class="app-logo">
+                <div class="logo-text">
+                    <span class="brand-title">Navi<span class="highlight">Core</span></span>
+                    <span class="brand-subtitle">ENTERPRISE SUITE v4.0</span>
+                </div>
+            </div>
+
+            <div class="sidebar-scroll">
+
+                <!-- Sección 1: Escenarios & Modo de Control -->
+                <section class="sidebar-section">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        Misión & Modos de Control
+                    </h2>
+
+                    <button class="btn btn-warning" id="btn-manual-drive">
+                        <span class="btn-icon">🎮</span> Conducción Manual (WASD)
+                    </button>
+
+                    <div class="control-group">
+                        <label for="combo-preset">Escenario Predefinido:</label>
+                        <select id="combo-preset" class="custom-select">
+                            <option value="default">🌐 Mapa por Defecto</option>
+                            <option value="factory">🏭 Planta Automotriz (AGV)</option>
+                            <option value="smartcity">🏙️ Smart City (Tráfico Urbano)</option>
+                            <option value="mine">⛰️ Mina a Cielo Abierto (Tierra/Agua)</option>
+                            <option value="warehouse">📦 Centro Logístico de Almacén</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="combo-algoritmo">Algoritmo de Búsqueda:</label>
+                        <select id="combo-algoritmo" class="custom-select">
+                            <option value="astar">🚀 A* (Heurística Euclidiana)</option>
+                            <option value="dijkstra">📉 Dijkstra (Costo Mínimo Sin Heurística)</option>
+                            <option value="greedy">🎯 Greedy Best-First Search</option>
+                            <option value="bfs">🌐 BFS (Búsqueda en Anchura)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="combo-vehiculo">Vehículo:</label>
+                        <select id="combo-vehiculo" class="custom-select"></select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="combo-clima">Condiciones Clima:</label>
+                        <select id="combo-clima" class="custom-select">
+                            <option value="clear">☀️ Despejado (Normal)</option>
+                            <option value="rain">🌧️ Lluvia (+30% consumo)</option>
+                            <option value="fog">🌫️ Niebla (-25% velocidad)</option>
+                            <option value="night">🌙 Noche (Luces + Focos)</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Sección 2: Sensores & Anillo de Autonomía -->
+                <section class="sidebar-section">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
+                        Capas & Autonomía
+                    </h2>
+
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-range">
+                            <span>⭕ Anillo Alcance Autonomía:</span>
+                            <input type="checkbox" id="toggle-range" class="custom-toggle" checked>
+                        </label>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-voz">
+                            <span>🗣️ Voz Sintetizada IA:</span>
+                            <input type="checkbox" id="toggle-voz" class="custom-toggle" checked>
+                        </label>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-lidar">
+                            <span>📡 Escáner LiDAR 360°:</span>
+                            <input type="checkbox" id="toggle-lidar" class="custom-toggle" checked>
+                        </label>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-heatmap">
+                            <span>🔥 Mapa de Calor (Heatmap):</span>
+                            <input type="checkbox" id="toggle-heatmap" class="custom-toggle">
+                        </label>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-audio">
+                            <span>🔊 Audio FX Cyberpunk:</span>
+                            <input type="checkbox" id="toggle-audio" class="custom-toggle" checked>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Sección 3: Acciones & Flotas -->
+                <section class="sidebar-section">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        Simulación & Flotas
+                    </h2>
+
+                    <button class="btn btn-primary btn-glow" id="btn-calcular">
+                        <span class="btn-icon">🚀</span> Calcular Ruta (A*)
+                    </button>
+
+                    <button class="btn btn-purple" id="btn-flota">
+                        <span class="btn-icon">🛸</span> Despachar Flota Completa
+                    </button>
+
+                    <div class="btn-grid">
+                        <button class="btn btn-secondary" id="btn-pausa">
+                            <span class="btn-icon">⏸</span> Pausar
+                        </button>
+                        <button class="btn btn-secondary" id="btn-reiniciar">
+                            <span class="btn-icon">🔄</span> Reiniciar
+                        </button>
+                    </div>
+
+                    <button class="btn btn-warning" id="btn-emergencia">
+                        <span class="btn-icon">🚨</span> Falla de Motor (Emergencia)
+                    </button>
+                </section>
+
+                <!-- Sección 4: Pincel & Carga de Imagen -->
+                <section class="sidebar-section">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                        Editor & Cargar Mapa
+                    </h2>
+                    <div class="brush-selector">
+                        <button class="btn-brush active" data-brush="obstacle">🚫 Obstáculo</button>
+                        <button class="btn-brush" data-brush="road">🛣️ Asfalto</button>
+                        <button class="btn-brush" data-brush="dirt">🪵 Tierra</button>
+                        <button class="btn-brush" data-brush="water">🌊 Agua</button>
+                        <button class="btn-brush" data-brush="recharge">⚡ Recarga</button>
+                        <button class="btn-brush" data-brush="waypoint">📍 Parada WP</button>
+                    </div>
+                </section>
+
+                <!-- Sección 5: Análisis & Reportes -->
+                <section class="sidebar-section">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                        Análisis & Reportes
+                    </h2>
+
+                    <button class="btn btn-warning" id="btn-comparar">
+                        <span class="btn-icon">📊</span> Comparar Vehículos
+                    </button>
+                    <button class="btn btn-success" id="btn-exportar">
+                        <span class="btn-icon">📄</span> Exportar Reporte
+                    </button>
+                </section>
+
+            </div>
+
+            <div class="sidebar-footer">
+                <span class="status-indicator ready" id="status-indicator"></span>
+                <span id="status-text">NaviCore Enterprise 4.0</span>
+            </div>
+        </aside>
+
+        <!-- === CONTENIDO PRINCIPAL (MAIN CONTENT) === -->
+        <main class="app-main">
+
+            <!-- Top Header Status Bar -->
+            <header class="top-bar">
+                <div class="top-bar-info">
+                    <h1 class="main-title">Sistema de Navegación Autónoma Enterprise 4.0</h1>
+                    <p class="main-description">Conducción manual WASD, radio de autonomía, logros de misión y partículas 3D.</p>
+                </div>
+                
+                <div class="camera-controls">
+                    <button class="btn-view active" id="btn-cam-2d">📐 Grid 2D Pro</button>
+                    <button class="btn-view" id="btn-cam-3d">🧊 Three.js 3D Real</button>
+                </div>
+            </header>
+
+            <!-- Área del Mapa Canvas / Three.js Container + HUD Cockpit Overlay -->
+            <section class="mapa-container" id="mapa-wrapper">
+                <canvas id="mapa-canvas"></canvas>
+                <div id="three-container" class="three-viewport" style="display: none;"></div>
+
+                <!-- HUD WASD Visual Indicator (en modo manual) -->
+                <div class="hud-wasd-box" id="hud-wasd" style="display: none;">
+                    <div class="wasd-title">🎮 MODO CONDUCCIÓN MANUAL (WASD)</div>
+                    <div class="wasd-keys">
+                        <span class="key-badge">W: Avanzar</span>
+                        <span class="key-badge">S: Retroceder</span>
+                        <span class="key-badge">A / D: Girar</span>
+                    </div>
+                </div>
+
+                <!-- HUD Cockpit -->
+                <div class="hud-cockpit">
+                    <div class="hud-speedometer">
+                        <span class="hud-label">VELOCIDAD</span>
+                        <span class="hud-value" id="hud-speed-val">0</span>
+                        <span class="hud-unit">KM/H</span>
+                    </div>
+                    <div class="hud-compass">
+                        <div class="compass-ring">N</div>
+                        <span class="compass-label" id="hud-waypoints-count">WP: 0</span>
+                    </div>
+                </div>
+
+                <div class="canvas-overlay-info" id="canvas-overlay">
+                    <span>💡 Presiona '🎮 Conducción Manual (WASD)' para conducir el vehículo tú mismo en tiempo real</span>
+                </div>
+            </section>
+
+            <!-- Consola Terminal Hacker Sci-Fi -->
+            <section class="terminal-drawer">
+                <div class="terminal-header">
+                    <span class="terminal-title">💻 Consola Terminal Sci-Fi NaviCore v4.0</span>
+                    <span class="terminal-hint">Escribe comandos como 'help', 'scan', 'fleet', 'drive'</span>
+                </div>
+                <div class="terminal-output" id="terminal-output">
+                    <div class="term-line">NaviCore Enterprise CLI v4.0 Ready</div>
+                </div>
+                <div class="terminal-input-row">
+                    <span class="term-prompt">navicore@nav-ai:~$</span>
+                    <input type="text" id="terminal-input" placeholder="Escribe un comando..." autocomplete="off">
+                </div>
+            </section>
+
+            <!-- Panel de Estadísticas, Logros y Telemetría -->
+            <section class="stats-panel">
+
+                <!-- Card 1: Logros y Medallas de Misión -->
+                <div class="glass-card achievements-card">
+                    <div class="card-header">
+                        <span class="card-icon">🏆</span>
+                        <h3>Logros de Misión</h3>
+                    </div>
+                    <div class="achievements-grid">
+                        <span class="badge-achieve active" id="badge-expert">🏆 Piloto Experto</span>
+                        <span class="badge-achieve" id="badge-eco">🌱 Eco-Efficient</span>
+                        <span class="badge-achieve" id="badge-safe">🛡️ Cero Colisiones</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: IA Copiloto Logs en Vivo -->
+                <div class="glass-card copilot-card" id="card-copilot">
+                    <div class="card-header">
+                        <span class="card-icon">🤖</span>
+                        <h3>NaviCore AI Copilot (Voz)</h3>
+                    </div>
+                    <div class="copilot-log-box" id="copilot-log-box">
+                        <div class="copilot-msg">🤖 <strong>NaviCore Copilot:</strong> Enterprise 4.0 cargado. Anillo de autonomía de batería activo.</div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Batería & Recarga ⚡ -->
+                <div class="glass-card" id="card-bateria">
+                    <div class="card-header">
+                        <span class="card-icon">⚡</span>
+                        <h3>Batería & Consumo</h3>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Nivel de Carga</span>
+                        <span class="stat-value highlight-cyan" id="stat-bateria">100.0%</span>
+                    </div>
+                    <div class="bateria-bar-container">
+                        <div class="bateria-bar-fill" id="bateria-fill"></div>
+                        <span class="bateria-bar-text" id="bateria-text">100.0%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Consumo Total</span>
+                        <span class="stat-value" id="stat-consumo">0.0 u</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Gráfico de Telemetría -->
+                <div class="glass-card chart-card" id="card-chart">
+                    <div class="card-header">
+                        <span class="card-icon">📈</span>
+                        <h3>Curva de Telemetría (Chart.js)</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="telemetry-chart"></canvas>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <!-- === MODAL DE TABLA DE DECISIONES === -->
+    <div class="modal-overlay" id="modal-decisiones" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>📋 Matriz de Tabla de Decisiones (NaviCore Enterprise 4.0)</h2>
+                <button class="modal-close" id="close-modal-decisiones">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-decisiones-content"></div>
+        </div>
+    </div>
+
+    <!-- === MODAL DE EXPORTACIÓN === -->
+    <div class="modal-overlay" id="modal-exportar" style="display: none;">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h2>📄 Exportar Reporte de Misión</h2>
+                <button class="modal-close" id="close-modal-exportar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Selecciona el formato para descargar el informe completo:</p>
+                <div class="export-options">
+                    <button class="btn btn-primary" id="btn-exp-json">💾 Formato JSON</button>
+                    <button class="btn btn-success" id="btn-exp-txt">📄 Formato Texto (TXT)</button>
+                    <button class="btn btn-purple" id="btn-exp-html">🌐 Reporte HTML Imprimible</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
