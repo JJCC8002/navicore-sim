@@ -75,13 +75,12 @@ export class Telemetry {
         for (let i = 0; i < path.length; i++) {
             const pt = path[i];
             
-            // 🛡️ Guardián para la matriz de cuadrícula
+            // Guardián para la matriz de cuadrícula
             if (!pt || !grid[pt.y] || !grid[pt.y][pt.x]) continue;
             
             const cell = grid[pt.y][pt.x];
 
             if (cell.terrainType === 'recharge') {
-                // Zona de recarga ⚡ recarga 15% de batería
                 totalEnergy = Math.max(0, totalEnergy - 15);
             } else {
                 const terrainMult = vehicle.terrainCosts ? (vehicle.terrainCosts[cell.terrainType] || 1.0) : 1.0;
@@ -112,13 +111,13 @@ export class Telemetry {
     updateUI(vehicle, currentStepProgress = 1.0) {
         if (!vehicle) return;
 
-        // 🛡️ Asignador seguro: Solo escribe en el DOM si el ID existe realmente
+        // Asignador seguro para evitar "Cannot set properties of null"
         const setSafeText = (id, text) => {
             const el = document.getElementById(id);
             if (el) el.textContent = text;
         };
 
-        const vehicleName = vehicle.name ? (vehicle.name.split(' ')[1] || vehicle.name) : 'Vehículo';
+        const vehicleName = vehicle.name ? (vehicle.name.split(' ')[1] || vehicle.name) : 'Rover';
         setSafeText('stat-vehiculo', vehicleName);
         setSafeText('stat-velocidad', `${vehicle.speed || 0} km/h`);
         setSafeText('stat-pasos', this.historyLabels.length);
