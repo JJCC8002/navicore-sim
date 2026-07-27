@@ -43,7 +43,6 @@ export class AStar {
             const nx = x + dir.x;
             const ny = y + dir.y;
 
-            // 🛡️ Verificar límites del grid y que la fila exista en la matriz
             if (ny >= 0 && ny < grid.length && nx >= 0 && grid[ny] && nx < grid[ny].length) {
                 const neighbor = grid[ny][nx];
                 if (neighbor && !neighbor.isObstacle) {
@@ -65,7 +64,6 @@ export class AStar {
             exploredHistory: []
         };
 
-        // 🛡️ GUARDIÁN: Validar existencia de grid y posiciones
         if (!grid || !Array.isArray(grid) || grid.length === 0) return emptyResult;
         if (!startPos || !endPos) return emptyResult;
         if (!grid[startPos.y] || !grid[startPos.y][startPos.x]) return emptyResult;
@@ -74,7 +72,6 @@ export class AStar {
         const startNode = grid[startPos.y][startPos.x];
         const endNode = grid[endPos.y][endPos.x];
 
-        // Limpiar estado de los nodos
         for (let r = 0; r < grid.length; r++) {
             if (!grid[r]) continue;
             for (let c = 0; c < grid[r].length; c++) {
@@ -146,15 +143,14 @@ export class AStar {
                     neighbor.g = tentativeG;
                     neighbor.h = this.heuristic(neighbor, endNode);
 
-                    // Ponderación según algoritmo elegido
                     if (algorithm === 'dijkstra') {
-                        neighbor.f = neighbor.g; // Dijkstra ignora la heurística
+                        neighbor.f = neighbor.g;
                     } else if (algorithm === 'greedy') {
-                        neighbor.f = neighbor.h; // Greedy ignora el costo acumulado g
+                        neighbor.f = neighbor.h;
                     } else if (algorithm === 'bfs') {
-                        neighbor.f = openSet.length; // BFS procesa como cola FIFO
+                        neighbor.f = openSet.length;
                     } else {
-                        neighbor.f = neighbor.g + neighbor.h; // A* Estándar
+                        neighbor.f = neighbor.g + neighbor.h;
                     }
 
                     if (!openSet.includes(neighbor)) {
