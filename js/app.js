@@ -31,7 +31,7 @@ class NaviCoreApp {
         this.lastPathResult = null;
         this.weather = 'clear';
 
-        this.isManualDrive = false; // Modo WASD
+        this.isManualDrive = false;
         this.manualPos = { x: 2, y: 8, angle: 0 };
 
         this.activeBrush = 'obstacle';
@@ -76,17 +76,9 @@ class NaviCoreApp {
     }
 
     bindEvents() {
-        // Conducción Manual WASD
-        document.getElementById('btn-manual-drive')?.addEventListener('click', () => {
-            this.toggleManualDrive();
-        });
+        document.getElementById('btn-manual-drive')?.addEventListener('click', () => this.toggleManualDrive());
+        document.getElementById('combo-preset')?.addEventListener('change', (e) => this.loadPresetScenario(e.target.value));
 
-        // Escenarios Presets
-        document.getElementById('combo-preset')?.addEventListener('change', (e) => {
-            this.loadPresetScenario(e.target.value);
-        });
-
-        // Algoritmo Selector
         document.getElementById('combo-algoritmo')?.addEventListener('change', (e) => {
             this.algorithm = e.target.value;
             const textMap = { astar: 'A* Standard', dijkstra: 'Dijkstra', greedy: 'Greedy Best-First', bfs: 'BFS' };
@@ -109,32 +101,21 @@ class NaviCoreApp {
             this.calculatePathAndTelemetry();
         });
 
-        // Toggles
         document.getElementById('toggle-range')?.addEventListener('change', (e) => {
             this.renderer.showRangeRing = e.target.checked;
             this.renderer.render();
         });
 
-        document.getElementById('toggle-voz')?.addEventListener('change', (e) => {
-            this.voice.enabled = e.target.checked;
-        });
-
-        document.getElementById('toggle-lidar')?.addEventListener('change', (e) => {
-            this.renderer.enableLidar = e.target.checked;
-        });
+        document.getElementById('toggle-voz')?.addEventListener('change', (e) => this.voice.enabled = e.target.checked);
+        document.getElementById('toggle-lidar')?.addEventListener('change', (e) => this.renderer.enableLidar = e.target.checked);
 
         document.getElementById('toggle-heatmap')?.addEventListener('change', (e) => {
             this.renderer.showHeatmap = e.target.checked;
             this.renderer.render();
         });
 
-        document.getElementById('toggle-audio')?.addEventListener('change', (e) => {
-            this.audio.enabled = e.target.checked;
-        });
-
-        document.getElementById('btn-emergencia')?.addEventListener('click', () => {
-            this.triggerEmergencyProtocol();
-        });
+        document.getElementById('toggle-audio')?.addEventListener('change', (e) => this.audio.enabled = e.target.checked);
+        document.getElementById('btn-emergencia')?.addEventListener('click', () => this.triggerEmergencyProtocol());
 
         document.querySelectorAll('.btn-brush').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -145,17 +126,9 @@ class NaviCoreApp {
             });
         });
 
-        document.getElementById('btn-flota')?.addEventListener('click', () => {
-            this.runFleetSimulation();
-        });
-
-        document.getElementById('btn-calcular')?.addEventListener('click', () => {
-            this.runSimulationAnimation();
-        });
-
-        document.getElementById('btn-pausa')?.addEventListener('click', () => {
-            this.togglePause();
-        });
+        document.getElementById('btn-flota')?.addEventListener('click', () => this.runFleetSimulation());
+        document.getElementById('btn-calcular')?.addEventListener('click', () => this.runSimulationAnimation());
+        document.getElementById('btn-pausa')?.addEventListener('click', () => this.togglePause());
 
         document.getElementById('btn-reiniciar')?.addEventListener('click', () => {
             this.stopAnimation();
@@ -180,12 +153,8 @@ class NaviCoreApp {
             if (velVal) velVal.textContent = `${this.animSpeedMs}ms`;
         });
 
-        document.getElementById('btn-cam-2d')?.addEventListener('click', (e) => {
-            this.setCameraMode('2d', e.target);
-        });
-        document.getElementById('btn-cam-3d')?.addEventListener('click', (e) => {
-            this.setCameraMode('3d', e.target);
-        });
+        document.getElementById('btn-cam-2d')?.addEventListener('click', (e) => this.setCameraMode('2d', e.target));
+        document.getElementById('btn-cam-3d')?.addEventListener('click', (e) => this.setCameraMode('3d', e.target));
 
         const canvas = document.getElementById('mapa-canvas');
         if (canvas) {
@@ -199,9 +168,7 @@ class NaviCoreApp {
             });
         }
 
-        window.addEventListener('mouseup', () => {
-            this.isMouseDown = false;
-        });
+        window.addEventListener('mouseup', () => this.isMouseDown = false);
 
         document.getElementById('btn-comparar')?.addEventListener('click', () => this.openDecisionModal());
         document.getElementById('close-modal-decisiones')?.addEventListener('click', () => {
@@ -237,7 +204,6 @@ class NaviCoreApp {
         });
     }
 
-    /* === CONDUCCIÓN MANUAL POR TECLADO (WASD / FLECHAS) === */
     toggleManualDrive() {
         this.isManualDrive = !this.isManualDrive;
         const hudWasd = document.getElementById('hud-wasd');
@@ -266,30 +232,20 @@ class NaviCoreApp {
             let angle = this.manualPos.angle;
 
             const k = e.key.toLowerCase();
-            if (k === 'w' || k === 'arrowup') {
-                ny -= 1;
-                angle = -Math.PI / 2;
-            } else if (k === 's' || k === 'arrowdown') {
-                ny += 1;
-                angle = Math.PI / 2;
-            } else if (k === 'a' || k === 'arrowleft') {
-                nx -= 1;
-                angle = Math.PI;
-            } else if (k === 'd' || k === 'arrowright') {
-                nx += 1;
-                angle = 0;
-            } else return;
+            if (k === 'w' || k === 'arrowup') { ny -= 1; angle = -Math.PI / 2; }
+            else if (k === 's' || k === 'arrowdown') { ny += 1; angle = Math.PI / 2; }
+            else if (k === 'a' || k === 'arrowleft') { nx -= 1; angle = Math.PI; }
+            else if (k === 'd' || k === 'arrowright') { nx += 1; angle = 0; }
+            else return;
 
-            // Verificar límites y colisión con obstáculos
             if (nx >= 0 && nx < this.renderer.cols && ny >= 0 && ny < this.renderer.rows) {
-                if (!this.renderer.grid[ny][nx].isObstacle) {
+                if (this.renderer.grid[ny] && this.renderer.grid[ny][nx] && !this.renderer.grid[ny][nx].isObstacle) {
                     this.manualPos = { x: nx, y: ny, angle: angle };
                     this.renderer.setVehiclePosition(this.manualPos);
                     this.audio.playEngineHum();
                     const hudSpeed = document.getElementById('hud-speed-val');
                     if (hudSpeed) hudSpeed.textContent = this.vehicleMgr.selectedVehicle.speed;
 
-                    // Si llega al destino
                     if (nx === this.renderer.endPos.x && ny === this.renderer.endPos.y) {
                         this.addCopilotMessage('🏆 <strong>¡Felicidades!</strong> Has conducido el vehículo con éxito hasta el objetivo.');
                         this.voice.speak('Felicidades. Has alcanzado el objetivo manualmente.');
@@ -378,7 +334,9 @@ class NaviCoreApp {
         const cols = this.renderer.cols;
 
         for (let r = 0; r < rows; r++) {
+            if (!grid[r]) continue;
             for (let c = 0; c < cols; c++) {
+                if (!grid[r][c]) continue;
                 grid[r][c].isObstacle = false;
                 grid[r][c].terrainType = 'road';
             }
@@ -387,10 +345,10 @@ class NaviCoreApp {
         if (presetKey === 'factory') {
             for (let r = 2; r < rows - 2; r += 3) {
                 for (let c = 4; c < cols - 4; c++) {
-                    if (c % 4 !== 0) grid[r][c].isObstacle = true;
+                    if (c % 4 !== 0 && grid[r] && grid[r][c]) grid[r][c].isObstacle = true;
                 }
             }
-            grid[8][12].terrainType = 'recharge';
+            if (grid[8] && grid[8][12]) grid[8][12].terrainType = 'recharge';
             this.vehicleMgr.setVehicle('agv');
             const comboVehiculo = document.getElementById('combo-vehiculo');
             if (comboVehiculo) comboVehiculo.value = 'agv';
@@ -398,6 +356,7 @@ class NaviCoreApp {
         } else if (presetKey === 'smartcity') {
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
+                    if (!grid[r] || !grid[r][c]) continue;
                     if (r % 4 === 0 || c % 6 === 0) grid[r][c].terrainType = 'road';
                     else grid[r][c].isObstacle = true;
                 }
@@ -409,6 +368,7 @@ class NaviCoreApp {
         } else if (presetKey === 'mine') {
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
+                    if (!grid[r] || !grid[r][c]) continue;
                     if (Math.random() < 0.4) grid[r][c].terrainType = 'dirt';
                     else if (Math.random() < 0.15) grid[r][c].terrainType = 'water';
                     else if (Math.random() < 0.2) grid[r][c].isObstacle = true;
@@ -430,6 +390,8 @@ class NaviCoreApp {
     }
 
     applyBrushAtMouse(e) {
+        if (!this.renderer || !this.renderer.grid) return;
+
         const rect = this.renderer.canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
@@ -438,6 +400,7 @@ class NaviCoreApp {
         const row = Math.floor(mouseY / this.renderer.cellHeight);
 
         if (col < 0 || col >= this.renderer.cols || row < 0 || row >= this.renderer.rows) return;
+        if (!this.renderer.grid[row] || !this.renderer.grid[row][col]) return;
 
         if (this.activeBrush === 'waypoint') {
             this.renderer.waypoints.push({ x: col, y: row });
@@ -519,7 +482,9 @@ class NaviCoreApp {
         const currentPos = this.renderer.vehiclePos || this.renderer.startPos;
 
         for (let r = 0; r < this.renderer.rows; r++) {
+            if (!this.renderer.grid[r]) continue;
             for (let c = 0; c < this.renderer.cols; c++) {
+                if (!this.renderer.grid[r][c]) continue;
                 if (this.renderer.grid[r][c].terrainType === 'recharge') {
                     const dist = Math.abs(currentPos.x - c) + Math.abs(currentPos.y - r);
                     if (dist < minDist) {
