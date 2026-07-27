@@ -10,6 +10,7 @@ export class AStar {
     }
 
     heuristic(pos0, pos1) {
+        if (!pos0 || !pos1) return 0;
         const dx = Math.abs(pos0.x - pos1.x);
         const dy = Math.abs(pos0.y - pos1.y);
         return Math.sqrt(dx * dx + dy * dy);
@@ -17,6 +18,8 @@ export class AStar {
 
     getNeighbors(grid, node, allowDiagonal = true) {
         const neighbors = [];
+        if (!grid || !node) return neighbors;
+
         const x = node.x;
         const y = node.y;
 
@@ -40,9 +43,10 @@ export class AStar {
             const nx = x + dir.x;
             const ny = y + dir.y;
 
-            if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
+            // 🛡️ Verificar límites del grid y que la fila exista en la matriz
+            if (ny >= 0 && ny < grid.length && nx >= 0 && grid[ny] && nx < grid[ny].length) {
                 const neighbor = grid[ny][nx];
-                if (!neighbor.isObstacle) {
+                if (neighbor && !neighbor.isObstacle) {
                     neighbors.push({ node: neighbor, moveCost: dir.cost });
                 }
             }
@@ -52,12 +56,30 @@ export class AStar {
     }
 
     findPath(grid, startPos, endPos, vehicleTerrainCosts = { road: 1.0, dirt: 1.6, water: 4.0 }, algorithm = 'astar') {
+        const emptyResult = {
+            success: false,
+            path: [],
+            totalCost: 0,
+            steps: 0,
+            nodesExplored: 0,
+            exploredHistory: []
+        };
+
+        // 🛡️ GUARDIÁN: Validar existencia de grid y posiciones
+        if (!grid || !Array.isArray(grid) || grid.length === 0) return emptyResult;
+        if (!startPos || !endPos) return emptyResult;
+        if (!grid[startPos.y] || !grid[startPos.y][startPos.x]) return emptyResult;
+        if (!grid[endPos.y] || !grid[endPos.y][endPos.x]) return emptyResult;
+
         const startNode = grid[startPos.y][startPos.x];
         const endNode = grid[endPos.y][endPos.x];
 
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
+        // Limpiar estado de los nodos
+        for (let r = 0; r < grid.length; r++) {
+            if (!grid[r]) continue;
+            for (let c = 0; c < grid[r].length; c++) {
                 const node = grid[r][c];
+                if (!node) continue;
                 node.g = Infinity;
                 node.h = 0;
                 node.f = Infinity;
