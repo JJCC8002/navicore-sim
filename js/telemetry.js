@@ -59,7 +59,7 @@ export class Telemetry {
     }
 
     calculate(path, vehicle, grid) {
-        if (!path || path.length < 2) {
+        if (!path || path.length < 2 || !vehicle || !grid) {
             this.reset();
             this.updateUI(vehicle);
             return;
@@ -68,24 +68,28 @@ export class Telemetry {
         const stepDistanceKm = 0.25;
         let totalDist = (path.length - 1) * stepDistanceKm;
         let totalEnergy = 0;
-        let obstaclesCount = 0;
 
         this.historyBattery = [100];
         this.historyLabels = ['0s'];
 
         for (let i = 0; i < path.length; i++) {
             const pt = path[i];
+            
+            // 🛡️ Guardián para la matriz de cuadrícula
+            if (!pt || !grid[pt.y] || !grid[pt.y][pt.x]) continue;
+            
             const cell = grid[pt.y][pt.x];
 
             if (cell.terrainType === 'recharge') {
                 // Zona de recarga ⚡ recarga 15% de batería
                 totalEnergy = Math.max(0, totalEnergy - 15);
             } else {
-                const terrainMult = vehicle.terrainCosts[cell.terrainType] || 1.0;
-                totalEnergy += vehicle.consumptionRate * terrainMult;
+                const terrainMult = vehicle.terrainCosts ? (vehicle.terrainCosts[cell.terrainType] || 1.0) : 1.0;
+                totalEnergy += (vehicle.consumptionRate || 1.0) * terrainMult;
             }
 
-            const remBat = Math.max(0, 100 - (totalEnergy / vehicle.batteryCap) * 100);
+            const batteryCap = vehicle.batteryCap || 100;
+            const remBat = Math.max(0, 100 - (totalEnergy / batteryCap) * 100);
             this.historyBattery.push(remBat.toFixed(1));
             this.historyLabels.push(`${i * 2}s`);
         }
@@ -93,10 +97,12 @@ export class Telemetry {
         this.distanceKm = totalDist;
         this.totalConsumptionUnits = totalEnergy;
 
-        const speedKmMin = vehicle.speed / 60;
+        const vehicleSpeed = vehicle.speed || 40;
+        const speedKmMin = vehicleSpeed / 60;
         this.estimatedTimeSec = Math.round((totalDist / speedKmMin) * 60);
 
-        const batteryUsed = (totalEnergy / vehicle.batteryCap) * 100;
+        const batteryCap = vehicle.batteryCap || 100;
+        const batteryUsed = (totalEnergy / batteryCap) * 100;
         this.batteryPercent = Math.max(0, 100 - batteryUsed);
 
         this.updateUI(vehicle);
@@ -104,21 +110,28 @@ export class Telemetry {
     }
 
     updateUI(vehicle, currentStepProgress = 1.0) {
-        document.getElementById('stat-vehiculo').textContent = vehicle.name.split(' ')[1] || vehicle.name;
-        document.getElementById('stat-velocidad').textContent = `${vehicle.speed} km/h`;
-        document.getElementById('stat-pasos').textContent = this.historyLabels.length;
+        if (!vehicle) return;
+
+        // 🛡️ Asignador seguro: Solo escribe en el DOM si el ID existe realmente
+        const setSafeText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+
+        const vehicleName = vehicle.name ? (vehicle.name.split(' ')[1] || vehicle.name) : 'Vehículo';
+        setSafeText('stat-vehiculo', vehicleName);
+        setSafeText('stat-velocidad', `${vehicle.speed || 0} km/h`);
+        setSafeText('stat-pasos', this.historyLabels.length);
 
         const currentBattery = (100 - (100 - this.batteryPercent) * currentStepProgress).toFixed(1);
-        document.getElementById('stat-bateria').textContent = `${currentBattery}%`;
+        setSafeText('stat-bateria', `${currentBattery}%`);
 
         const barFill = document.getElementById('bateria-fill');
         const barText = document.getElementById('bateria-text');
-        if (barFill && barText) {
-            barFill.style.width = `${currentBattery}%`;
-            barText.textContent = `${currentBattery}%`;
-        }
+        if (barFill) barFill.style.width = `${currentBattery}%`;
+        if (barText) barText.textContent = `${currentBattery}%`;
 
-        document.getElementById('stat-consumo').textContent = `${(this.totalConsumptionUnits * currentStepProgress).toFixed(1)} u`;
+        setSafeText('stat-consumo', `${(this.totalConsumptionUnits * currentStepProgress).toFixed(1)} u`);
     }
 
     updateChart() {
