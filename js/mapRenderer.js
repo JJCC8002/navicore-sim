@@ -6,6 +6,8 @@
 export class MapRenderer {
     constructor(canvasId, cols = 25, rows = 16) {
         this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) return;
+
         this.ctx = this.canvas.getContext('2d', { alpha: false });
         this.cols = cols;
         this.rows = rows;
@@ -59,12 +61,17 @@ export class MapRenderer {
 
                 row.push({ x: c, y: r, isObstacle: isObstacle, terrainType: terrain });
             }
+            this.grid.push(row);
         }
     }
 
     generateNewRandomMap() {
+        if (!this.grid || this.grid.length === 0) this.initGrid();
+
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
+                if (!this.grid[r] || !this.grid[r][c]) continue;
+
                 if ((c === this.startPos.x && r === this.startPos.y) || (c === this.endPos.x && r === this.endPos.y)) {
                     this.grid[r][c].isObstacle = false;
                     continue;
@@ -99,6 +106,8 @@ export class MapRenderer {
 
     /* Scaling Retina/HighDPI para Nitidez Extrema sin Borrosidad */
     resizeCanvas() {
+        if (!this.canvas || !this.canvas.parentElement) return;
+
         const container = this.canvas.parentElement;
         const dpr = window.devicePixelRatio || 1;
 
@@ -154,13 +163,13 @@ export class MapRenderer {
         const c3d = document.getElementById('three-container');
 
         if (mode === '3d') {
-            c2d.style.display = 'none';
+            if (c2d) c2d.style.display = 'none';
             if (c3d) {
                 c3d.style.display = 'block';
                 this.updateThreeScene();
             }
         } else {
-            c2d.style.display = 'block';
+            if (c2d) c2d.style.display = 'block';
             if (c3d) c3d.style.display = 'none';
         }
     }
@@ -201,7 +210,7 @@ export class MapRenderer {
     }
 
     updateThreeScene() {
-        if (!this.gridGroup3D || !window.THREE) return;
+        if (!this.gridGroup3D || !window.THREE || !this.grid || this.grid.length === 0) return;
 
         while (this.gridGroup3D.children.length > 0) {
             this.gridGroup3D.remove(this.gridGroup3D.children[0]);
@@ -213,8 +222,11 @@ export class MapRenderer {
         const offsetY = (this.rows * ch) / 2;
 
         for (let r = 0; r < this.rows; r++) {
+            if (!this.grid[r]) continue;
             for (let c = 0; c < this.cols; c++) {
                 const cell = this.grid[r][c];
+                if (!cell) continue;
+
                 const x = offsetX + c * cw;
                 const y = offsetY - r * ch;
 
@@ -256,6 +268,11 @@ export class MapRenderer {
 
     /* === RENDERIZADO 2D HD 60 FPS SIN LAG === */
     render2D() {
+        // 🛡️ GUARDIÁN: Evita ejecutar si la cuadrícula o el contexto 2D aún no están disponibles
+        if (!this.ctx || !this.grid || !Array.isArray(this.grid) || this.grid.length === 0) {
+            return;
+        }
+
         const cw = this.cellWidth;
         const ch = this.cellHeight;
 
@@ -265,8 +282,11 @@ export class MapRenderer {
 
         // 1. Celdas de Cuadrícula y Terrenos HD
         for (let r = 0; r < this.rows; r++) {
+            if (!this.grid[r]) continue;
             for (let c = 0; c < this.cols; c++) {
                 const cell = this.grid[r][c];
+                if (!cell) continue;
+
                 const x = c * cw;
                 const y = r * ch;
 
@@ -306,8 +326,11 @@ export class MapRenderer {
         // 2. Mapa de Calor (Heatmap)
         if (this.showHeatmap) {
             for (let r = 0; r < this.rows; r++) {
+                if (!this.grid[r]) continue;
                 for (let c = 0; c < this.cols; c++) {
                     const cell = this.grid[r][c];
+                    if (!cell) continue;
+
                     const x = c * cw;
                     const y = r * ch;
 
@@ -323,29 +346,35 @@ export class MapRenderer {
         }
 
         // 3. Nodos Explorados A*
-        for (const node of this.exploredNodes) {
-            const x = node.x * cw;
-            const y = node.y * ch;
-            this.ctx.fillStyle = 'rgba(0, 240, 255, 0.12)';
-            this.ctx.fillRect(x + 2, y + 2, cw - 4, ch - 4);
+        if (Array.isArray(this.exploredNodes)) {
+            for (const node of this.exploredNodes) {
+                if (!node) continue;
+                const x = node.x * cw;
+                const y = node.y * ch;
+                this.ctx.fillStyle = 'rgba(0, 240, 255, 0.12)';
+                this.ctx.fillRect(x + 2, y + 2, cw - 4, ch - 4);
+            }
         }
 
         // 4. Paradas Waypoints
-        this.waypoints.forEach((wp, idx) => {
-            const wx = wp.x * cw + cw / 2;
-            const wy = wp.y * ch + ch / 2;
-            this.ctx.fillStyle = '#8957e5';
-            this.ctx.beginPath();
-            this.ctx.arc(wx, wy, cw * 0.28, 0, Math.PI * 2);
-            this.ctx.fill();
+        if (Array.isArray(this.waypoints)) {
+            this.waypoints.forEach((wp, idx) => {
+                if (!wp) return;
+                const wx = wp.x * cw + cw / 2;
+                const wy = wp.y * ch + ch / 2;
+                this.ctx.fillStyle = '#8957e5';
+                this.ctx.beginPath();
+                this.ctx.arc(wx, wy, cw * 0.28, 0, Math.PI * 2);
+                this.ctx.fill();
 
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = 'bold 11px Inter';
-            this.ctx.fillText(`${idx + 1}`, wx - 3, wy + 4);
-        });
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = 'bold 11px Inter';
+                this.ctx.fillText(`${idx + 1}`, wx - 3, wy + 4);
+            });
+        }
 
         // 5. Ruta Neón Luminosa (Glow Effect)
-        if (this.calculatedPath.length > 1) {
+        if (Array.isArray(this.calculatedPath) && this.calculatedPath.length > 1) {
             this.ctx.beginPath();
             this.ctx.strokeStyle = '#00f0ff';
             this.ctx.lineWidth = 4;
@@ -356,6 +385,7 @@ export class MapRenderer {
 
             for (let i = 0; i < this.calculatedPath.length; i++) {
                 const pt = this.calculatedPath[i];
+                if (!pt) continue;
                 const cx = pt.x * cw + cw / 2;
                 const cy = pt.y * ch + ch / 2;
 
@@ -367,29 +397,32 @@ export class MapRenderer {
         }
 
         // 6. Puntos de Inicio y Destino
-        const sx = this.startPos.x * cw + cw / 2;
-        const sy = this.startPos.y * ch + ch / 2;
-        this.ctx.fillStyle = '#00e676';
-        this.ctx.shadowColor = '#00e676';
-        this.ctx.shadowBlur = 16;
-        this.ctx.beginPath();
-        this.ctx.arc(sx, sy, cw * 0.35, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
+        if (this.startPos) {
+            const sx = this.startPos.x * cw + cw / 2;
+            const sy = this.startPos.y * ch + ch / 2;
+            this.ctx.fillStyle = '#00e676';
+            this.ctx.shadowColor = '#00e676';
+            this.ctx.shadowBlur = 16;
+            this.ctx.beginPath();
+            this.ctx.arc(sx, sy, cw * 0.35, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+        }
 
-        const ex = this.endPos.x * cw + cw / 2;
-        const ey = this.endPos.y * ch + ch / 2;
-        this.ctx.fillStyle = '#ff3d71';
-        this.ctx.shadowColor = '#ff3d71';
-        this.ctx.shadowBlur = 16;
-        this.ctx.beginPath();
-        this.ctx.arc(ex, ey, cw * 0.35, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
+        if (this.endPos) {
+            const ex = this.endPos.x * cw + cw / 2;
+            const ey = this.endPos.y * ch + ch / 2;
+            this.ctx.fillStyle = '#ff3d71';
+            this.ctx.shadowColor = '#ff3d71';
+            this.ctx.shadowBlur = 16;
+            this.ctx.beginPath();
+            this.ctx.arc(ex, ey, cw * 0.35, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+        }
 
         // 7. Suavizado de Posición del Vehículo (Interpolación Lerp Ultra Fluida)
         if (this.targetVehiclePos && this.currentVehiclePos) {
-            // Lerp factor (0.2 = movimiento suave a 60 fps)
             this.currentVehiclePos.x += (this.targetVehiclePos.x - this.currentVehiclePos.x) * 0.22;
             this.currentVehiclePos.y += (this.targetVehiclePos.y - this.currentVehiclePos.y) * 0.22;
             this.currentVehiclePos.angle += (this.targetVehiclePos.angle - this.currentVehiclePos.angle) * 0.22;
@@ -465,17 +498,20 @@ export class MapRenderer {
         }
 
         // 11. Flotas Multi-Vehículo
-        for (const vPos of this.fleetPositions) {
-            const fx = vPos.x * cw + cw / 2;
-            const fy = vPos.y * ch + ch / 2;
+        if (Array.isArray(this.fleetPositions)) {
+            for (const vPos of this.fleetPositions) {
+                if (!vPos) continue;
+                const fx = vPos.x * cw + cw / 2;
+                const fy = vPos.y * ch + ch / 2;
 
-            this.ctx.fillStyle = vPos.color || '#ffaa00';
-            this.ctx.shadowColor = vPos.color || '#ffaa00';
-            this.ctx.shadowBlur = 12;
-            this.ctx.beginPath();
-            this.ctx.arc(fx, fy, cw * 0.28, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = vPos.color || '#ffaa00';
+                this.ctx.shadowColor = vPos.color || '#ffaa00';
+                this.ctx.shadowBlur = 12;
+                this.ctx.beginPath();
+                this.ctx.arc(fx, fy, cw * 0.28, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.shadowBlur = 0;
+            }
         }
     }
 }
