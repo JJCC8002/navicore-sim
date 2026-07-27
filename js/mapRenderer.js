@@ -25,7 +25,6 @@ export class MapRenderer {
         this.calculatedPath = [];
         this.exploredNodes = [];
         
-        // Posiciones suavizadas (Lerp) para 60 FPS sin lag
         this.targetVehiclePos = null;
         this.currentVehiclePos = null;
         this.fleetPositions = [];
@@ -104,7 +103,6 @@ export class MapRenderer {
         this.updateThreeScene();
     }
 
-    /* Scaling Retina/HighDPI para Nitidez Extrema sin Borrosidad */
     resizeCanvas() {
         if (!this.canvas || !this.canvas.parentElement) return;
 
@@ -174,7 +172,6 @@ export class MapRenderer {
         }
     }
 
-    /* === INTEGACIÓN THREE.JS 3D OPTIMIZADA === */
     initThreeJS() {
         const container = document.getElementById('three-container');
         if (!container || !window.THREE) return;
@@ -266,9 +263,7 @@ export class MapRenderer {
         this.renderer3D.render(this.scene3D, this.camera3D);
     }
 
-    /* === RENDERIZADO 2D HD 60 FPS SIN LAG === */
     render2D() {
-        // 🛡️ GUARDIÁN: Evita ejecutar si la cuadrícula o el contexto 2D aún no están disponibles
         if (!this.ctx || !this.grid || !Array.isArray(this.grid) || this.grid.length === 0) {
             return;
         }
@@ -276,11 +271,9 @@ export class MapRenderer {
         const cw = this.cellWidth;
         const ch = this.cellHeight;
 
-        // Fondo oscuro continuo
         this.ctx.fillStyle = '#060e1a';
         this.ctx.fillRect(0, 0, this.displayWidth, this.displayHeight);
 
-        // 1. Celdas de Cuadrícula y Terrenos HD
         for (let r = 0; r < this.rows; r++) {
             if (!this.grid[r]) continue;
             for (let c = 0; c < this.cols; c++) {
@@ -303,12 +296,10 @@ export class MapRenderer {
                 }
                 this.ctx.fillRect(x, y, cw, ch);
 
-                // Rejilla Neón
                 this.ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
                 this.ctx.lineWidth = 1;
                 this.ctx.strokeRect(x, y, cw, ch);
 
-                // Patrón de Obstáculo
                 if (cell.isObstacle) {
                     this.ctx.fillStyle = 'rgba(255, 61, 113, 0.35)';
                     this.ctx.fillRect(x + 4, y + 4, cw - 8, ch - 8);
@@ -323,7 +314,6 @@ export class MapRenderer {
             }
         }
 
-        // 2. Mapa de Calor (Heatmap)
         if (this.showHeatmap) {
             for (let r = 0; r < this.rows; r++) {
                 if (!this.grid[r]) continue;
@@ -345,7 +335,6 @@ export class MapRenderer {
             }
         }
 
-        // 3. Nodos Explorados A*
         if (Array.isArray(this.exploredNodes)) {
             for (const node of this.exploredNodes) {
                 if (!node) continue;
@@ -356,7 +345,6 @@ export class MapRenderer {
             }
         }
 
-        // 4. Paradas Waypoints
         if (Array.isArray(this.waypoints)) {
             this.waypoints.forEach((wp, idx) => {
                 if (!wp) return;
@@ -373,7 +361,6 @@ export class MapRenderer {
             });
         }
 
-        // 5. Ruta Neón Luminosa (Glow Effect)
         if (Array.isArray(this.calculatedPath) && this.calculatedPath.length > 1) {
             this.ctx.beginPath();
             this.ctx.strokeStyle = '#00f0ff';
@@ -396,7 +383,6 @@ export class MapRenderer {
             this.ctx.shadowBlur = 0;
         }
 
-        // 6. Puntos de Inicio y Destino
         if (this.startPos) {
             const sx = this.startPos.x * cw + cw / 2;
             const sy = this.startPos.y * ch + ch / 2;
@@ -421,7 +407,6 @@ export class MapRenderer {
             this.ctx.shadowBlur = 0;
         }
 
-        // 7. Suavizado de Posición del Vehículo (Interpolación Lerp Ultra Fluida)
         if (this.targetVehiclePos && this.currentVehiclePos) {
             this.currentVehiclePos.x += (this.targetVehiclePos.x - this.currentVehiclePos.x) * 0.22;
             this.currentVehiclePos.y += (this.targetVehiclePos.y - this.currentVehiclePos.y) * 0.22;
@@ -432,7 +417,6 @@ export class MapRenderer {
         const vx = activeV.x * cw + cw / 2;
         const vy = activeV.y * ch + ch / 2;
 
-        // 8. Anillo Alcance Autonomía ⭕
         if (this.showRangeRing) {
             const maxRadius = (this.batteryPercent / 100) * (cw * 8);
             this.ctx.strokeStyle = 'rgba(0, 230, 118, 0.35)';
@@ -444,7 +428,6 @@ export class MapRenderer {
             this.ctx.setLineDash([]);
         }
 
-        // 9. LiDAR Radar 360°
         if (this.enableLidar) {
             this.lidarAngle += 0.06;
             this.ctx.save();
@@ -464,13 +447,11 @@ export class MapRenderer {
             this.ctx.restore();
         }
 
-        // 10. Vehículo Principal & Headlights
         if (this.currentVehiclePos) {
             this.ctx.save();
             this.ctx.translate(vx, vy);
             this.ctx.rotate(activeV.angle);
 
-            // Focos
             const lightGrad = this.ctx.createRadialGradient(15, 0, 2, 60, 0, 45);
             lightGrad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
             lightGrad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
@@ -482,7 +463,6 @@ export class MapRenderer {
             this.ctx.closePath();
             this.ctx.fill();
 
-            // Nave / Vehículo
             this.ctx.fillStyle = '#ffffff';
             this.ctx.shadowColor = '#00f0ff';
             this.ctx.shadowBlur = 18;
@@ -497,7 +477,6 @@ export class MapRenderer {
             this.ctx.restore();
         }
 
-        // 11. Flotas Multi-Vehículo
         if (Array.isArray(this.fleetPositions)) {
             for (const vPos of this.fleetPositions) {
                 if (!vPos) continue;
